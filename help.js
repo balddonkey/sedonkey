@@ -27,7 +27,7 @@ function phelp() {
 
 function pversion() {
     const fs = require('fs');
-    let d = JSON.parse(fs.readFileSync('./package.json'));
+    var d = JSON.parse(fs.readFileSync('./package.json'));
     console.log('sedonkey version: ' + d.version);
 }
 

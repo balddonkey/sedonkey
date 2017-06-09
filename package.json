@@ -26,5 +26,8 @@
   "homepage": "https://github.com/balddonkey/sedonkey#readme",
   "bin":{
     "sedonkey": "./index.js"   
+  },
+  "dependencies": {
+      
   }
 }
