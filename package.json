@@ -1,0 +1,30 @@
+{
+  "name": "sedonkey",
+  "version": "1.0.0",
+  "description": "SourceTree for terminal",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/balddonkey/sedonkey.git"
+  },
+  "keywords": [
+    "sedonkey",
+    "sourceindex",
+    "gitrouter",
+    "gitindex",
+    "donkey",
+    "balddonkey"
+  ],
+  "author": "balddonkey",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/balddonkey/sedonkey/issues"
+  },
+  "homepage": "https://github.com/balddonkey/sedonkey#readme",
+  "bin":{
+    "sedonkey": "./index.js"   
+  }
+}
