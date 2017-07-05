@@ -2,10 +2,22 @@
 const fs = require('fs');
 const path = require('path');
 
-const configName = 'sedonkey.config.json';
-const argvs = process.argv;
 const shellPath = __dirname;
+const configName = 'sedonkey.config.json';
 const configPath = path.join(shellPath, '../', configName);
+
+const ignoreName = 'ignore.config.json';
+const ignorePath = path.join(shellPath, '../', ignoreName);
+
+Array.prototype.contains = function(str) {
+    for (var i = 0;i<this.length;i++) {
+        var value = this[i];
+        if (value == str) {
+            return true;
+        }
+    }
+    return false;
+}
 
 function description() {
     if (fs.existsSync(configPath)) {
@@ -33,29 +45,41 @@ function description() {
     }
 }
 
+function getIgnoreSetting(configs, config) {
+    let ignore = config.ignore || configs.ignore 
+                 || JSON.parse(fs.readFileSync(ignorePath));
+    if (!(ignore instanceof Array)) {
+        ignore = [];
+    }
+    return ignore;
+}
+
 function search(repository, map) {
-    console.log('search: ' + repository + (map ? ' in ' + map : ''));
+    console.log('search: ' + repository + (map ? ' in ' + map : '') + '\n');
     let configs = resovelConfogsFile();
     if (map) {
-        if (configs[map].path) {
-            searchAtPath(repository, configs[map]. path);
+        if (configs[map] && configs[map].path) {
+            let ignore = getIgnoreSetting(configs, configs[map]);
+            searchAtPath(repository, configs[map].path, ignore);
         } else {
-            console.log('Path map: ' + map + ' not found');
+            console.log('Path map <' + map + '> not found');
         }
     } else {
         for (var key in configs) {
             if (configs.hasOwnProperty(key)) {
+                console.log(key + ':');
                 let elem = configs[key];
                 let p = elem.path;
                 if (path) {
-                    searchAtPath(repository, p);
+                    let ignore = getIgnoreSetting(configs, elem);
+                    searchAtPath(repository, p, ignore);
                 }
             }
         }
     }
 }
 
-function searchAtPath(repository, p) {
+function searchAtPath(repository, p, ignore) {
     if (!fs.existsSync(p)) {
         return;
     }
@@ -63,11 +87,20 @@ function searchAtPath(repository, p) {
         return;
     }
     let base = p.split('/').pop();
-    fs.readdir(p, function( err, files) {
-        files.forEach(function(file) {
-            console.log(path.join(p, file));
-            if (file.indexOf(base) >= 0) {
-                
+    fs.readdir(p, function (err, files) {
+        files.forEach(function (file) {
+            let subpath = path.join(p, file);
+            if (ignore.contains(file)) {                                                                                          
+                return;
+            }
+            // console.log(subpath);
+            if (fs.lstatSync(subpath).isDirectory()) {
+                if (file.indexOf(repository) >= 0 
+                    && fs.existsSync(path.join(subpath, '.git'))) {
+                    console.log(subpath);
+                } else {
+                    searchAtPath(repository, subpath, ignore);
+                }
             }
         }, this);
     });
@@ -84,7 +117,7 @@ function remove(map) {
     delete configs[map];
     let text = JSON.stringify(configs, null, 4);
     console.log(text);
-    fs.writeFile(configPath, text, function(err, data) {
+    fs.writeFile(configPath, text, function (err, data) {
         if (err) {
             console.log(err);
         } else {
