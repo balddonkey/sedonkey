@@ -9,8 +9,8 @@ const configPath = path.join(shellPath, '../', configName);
 const ignoreName = 'ignore.config.json';
 const ignorePath = path.join(shellPath, '../', ignoreName);
 
-Array.prototype.contains = function(str) {
-    for (var i = 0;i<this.length;i++) {
+Array.prototype.contains = function (str) {
+    for (var i = 0; i < this.length; i++) {
         var value = this[i];
         if (value == str) {
             return true;
@@ -46,8 +46,8 @@ function description() {
 }
 
 function getIgnoreSetting(configs, config) {
-    let ignore = config.ignore || configs.ignore 
-                 || JSON.parse(fs.readFileSync(ignorePath));
+    let ignore = config.ignore || configs.ignore
+        || JSON.parse(fs.readFileSync(ignorePath));
     if (!(ignore instanceof Array)) {
         ignore = [];
     }
@@ -60,19 +60,27 @@ function search(repository, map) {
     if (map) {
         if (configs[map] && configs[map].path) {
             let ignore = getIgnoreSetting(configs, configs[map]);
-            searchAtPath(repository, configs[map].path, ignore);
+            let results = searchAtPath(repository, configs[map].path, ignore);
+            (results && results.length > 0) ?
+                results.forEach(function (value) {
+                    console.log(value);
+                }, this) : console.log('No repository found');
         } else {
             console.log('Path map <' + map + '> not found');
         }
     } else {
-        for (var key in configs) {
+        for (let key in configs) {
             if (configs.hasOwnProperty(key)) {
-                console.log(key + ':');
                 let elem = configs[key];
                 let p = elem.path;
-                if (path) {
+                if (p) {
+                    console.log(key + ':');
                     let ignore = getIgnoreSetting(configs, elem);
-                    searchAtPath(repository, p, ignore);
+                    let results = searchAtPath(repository, p, ignore);
+                    (results && results.length > 0) ?
+                        results.forEach(function (value) {
+                            console.log(value + '\n');
+                        }, this) : console.log('No repository found\n');
                 }
             }
         }
@@ -81,29 +89,33 @@ function search(repository, map) {
 
 function searchAtPath(repository, p, ignore) {
     if (!fs.existsSync(p)) {
-        return;
+        return null;
     }
     if (fs.lstatSync(p).isFile()) {
-        return;
+        return null;
     }
     let base = p.split('/').pop();
-    fs.readdir(p, function (err, files) {
-        files.forEach(function (file) {
-            let subpath = path.join(p, file);
-            if (ignore.contains(file)) {                                                                                          
-                return;
+    let files = fs.readdirSync(p);
+    let results = [];
+    files.forEach(function (file) {
+        let subpath = path.join(p, file);
+        if (ignore.contains(file)) {
+            return;
+        }
+        // console.log(subpath);
+        if (fs.lstatSync(subpath).isDirectory()) {
+            if (file.toLowerCase().indexOf(repository.toLowerCase()) >= 0
+                && fs.existsSync(path.join(subpath, '.git'))) {
+                results.push(subpath);
+            } else {
+                let rs = searchAtPath(repository, subpath, ignore);
+                rs.forEach(function (element) {
+                    results.push(element);
+                }, this);
             }
-            // console.log(subpath);
-            if (fs.lstatSync(subpath).isDirectory()) {
-                if (file.indexOf(repository) >= 0 
-                    && fs.existsSync(path.join(subpath, '.git'))) {
-                    console.log(subpath);
-                } else {
-                    searchAtPath(repository, subpath, ignore);
-                }
-            }
-        }, this);
-    });
+        }
+    }, this);
+    return results;
 }
 
 function remove(map) {
@@ -111,12 +123,12 @@ function remove(map) {
     let configs = resovelConfogsFile();
     if (!configs[map]) {
         console.log('path map: ' + map + ' not exist');
+        return;
     }
     let p = configs[map].path;
     let desc = configs[map].desc;
     delete configs[map];
     let text = JSON.stringify(configs, null, 4);
-    console.log(text);
     fs.writeFile(configPath, text, function (err, data) {
         if (err) {
             console.log(err);

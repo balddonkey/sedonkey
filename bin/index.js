@@ -6,7 +6,7 @@ const handler = require('./handler.js');
 function initialize() {
     cmd.version('1.0.0')
         .usage('<command> [options]')
-        .option('-d, --ddddd', '输出git代码库追踪目录', handler.description);
+        .option('-d, --desc', '输出git代码库追踪目录', handler.description);
 
     cmd.command('search <repository> [map]')
         .description('在指定目录映射查找git代码库')
