@@ -69,6 +69,9 @@ function search(repository, map) {
             console.log('Path map <' + map + '> not found');
         }
     } else {
+        if (!configs.length) {
+            return console.log('No path map settings.');
+        }
         for (let key in configs) {
             if (configs.hasOwnProperty(key)) {
                 let elem = configs[key];
