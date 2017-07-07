@@ -19,6 +19,16 @@ Array.prototype.contains = function (str) {
     return false;
 }
 
+Object.prototype.isEmpty = function() {
+    for (var key in this) {
+        if (this.hasOwnProperty(key)) {
+            var element = this[key];
+            return false;
+        }
+    }
+    return true;
+}
+
 function description() {
     if (fs.existsSync(configPath)) {
         let text = fs.readFileSync(configPath);
@@ -69,7 +79,7 @@ function search(repository, map) {
             console.log('Path map <' + map + '> not found');
         }
     } else {
-        if (!configs.length) {
+        if (configs.isEmpty()) {
             return console.log('No path map settings.');
         }
         for (let key in configs) {
@@ -82,8 +92,8 @@ function search(repository, map) {
                     let results = searchAtPath(repository, p, ignore);
                     (results && results.length > 0) ?
                         results.forEach(function (value) {
-                            console.log(value + '\n');
-                        }, this) : console.log('No repository found\n');
+                            console.log(value);
+                        }, this) : console.log('No repository found');
                 }
             }
         }
